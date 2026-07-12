@@ -4,7 +4,7 @@
 const state = {
     matchId: 'worldcup_final',
     homeTeam: 'France',
-    awayTeam: 'Maroc',
+    awayTeam: 'Morroco',
     score: '2 - 0',
     minute: 67,
     status: 'live',
