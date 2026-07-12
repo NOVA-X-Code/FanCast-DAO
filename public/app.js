@@ -1,15 +1,11 @@
 // ============================================
 // STATE
 // ============================================
-let ws = null;
-let walletAddress = null;
-let isConnected = false;
-
 const state = {
     matchId: 'worldcup_final',
     homeTeam: 'France',
-    awayTeam: 'Brazil',
-    score: '2 - 1',
+    awayTeam: 'Maroc',
+    score: '2 - 0',
     minute: 67,
     status: 'live',
     commentary: '🎙️ Waiting for the match to start...',
@@ -17,6 +13,12 @@ const state = {
     tone: 'neutral',
     tips: []
 };
+
+let ws = null;
+let walletAddress = null;
+let isConnected = false;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 // ============================================
 // DOM REFS
@@ -44,36 +46,52 @@ const dom = {
 function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws?matchId=${state.matchId}&userId=${walletAddress || 'anonymous'}`;
-    
-    ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-        isConnected = true;
-        dom.connectionDot.className = 'dot online';
-        dom.connectionStatus.textContent = 'Live';
-        dom.connectionStatus.style.color = '#00ff88';
-        console.log('✅ WebSocket connected');
-    };
+    try {
+        ws = new WebSocket(wsUrl);
 
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        handleWebSocketMessage(data);
-    };
+        ws.onopen = () => {
+            isConnected = true;
+            reconnectAttempts = 0;
+            updateConnectionStatus(true);
+            console.log('✅ WebSocket connected');
+        };
 
-    ws.onerror = (error) => {
-        console.error('❌ WebSocket error:', error);
-    };
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            } catch (error) {
+                console.error('Message parse error:', error);
+            }
+        };
 
-    ws.onclose = () => {
-        isConnected = false;
-        dom.connectionDot.className = 'dot offline';
-        dom.connectionStatus.textContent = 'Offline';
-        dom.connectionStatus.style.color = '#ff4444';
-        console.log('🔌 WebSocket disconnected');
-        
-        // Auto-reconnect after 3 seconds
+        ws.onerror = (error) => {
+            console.error('❌ WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+            isConnected = false;
+            updateConnectionStatus(false);
+            console.log('🔌 WebSocket disconnected');
+
+            // Auto-reconnect with exponential backoff
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                reconnectAttempts++;
+                setTimeout(connectWebSocket, delay);
+            }
+        };
+    } catch (error) {
+        console.error('WebSocket connection error:', error);
         setTimeout(connectWebSocket, 3000);
-    };
+    }
+}
+
+function updateConnectionStatus(connected) {
+    dom.connectionDot.className = `dot ${connected ? 'online' : 'offline'}`;
+    dom.connectionStatus.textContent = connected ? 'Live' : 'Offline';
+    dom.connectionStatus.style.color = connected ? '#00ff88' : '#ff4444';
 }
 
 function handleWebSocketMessage(data) {
@@ -83,10 +101,12 @@ function handleWebSocketMessage(data) {
             state.energy = data.energy;
             state.tone = data.tone;
             updateCommentary();
-            
-            if (data.audioUrl) {
+
+            if (data.audioUrl && dom.audioPlayer) {
                 dom.audioPlayer.src = data.audioUrl;
-                dom.audioPlayer.play().catch(() => {});
+                dom.audioPlayer.play().catch(() => {
+                    // Auto-play prevented by browser
+                });
             }
             break;
 
@@ -94,6 +114,12 @@ function handleWebSocketMessage(data) {
             state.tips.unshift(data.tip);
             if (state.tips.length > 20) state.tips.pop();
             updateTips();
+            break;
+
+        case 'tip_received':
+            // Visual feedback for tip
+            const tipMessage = data.tip || {};
+            showTipNotification(tipMessage);
             break;
 
         case 'connected':
@@ -122,7 +148,7 @@ function updateCommentary() {
         celebratory: '🎉',
         neutral: '🎙️'
     };
-    
+
     dom.commentaryText.textContent = `"${state.commentary}"`;
     dom.energyFill.style.width = `${state.energy}%`;
     dom.energyLabel.textContent = `${state.energy}%`;
@@ -135,7 +161,7 @@ function updateTips() {
         dom.tipsList.innerHTML = '<p class="empty">No tips yet. Be the first!</p>';
         return;
     }
-    
+
     dom.tipsList.innerHTML = state.tips.map(tip => `
         <div class="tip-item">
             <span>${tip.from.slice(0, 6)}...${tip.from.slice(-4)}</span>
@@ -150,40 +176,91 @@ function updateMatch(event) {
     if (event.score) state.score = event.score;
     if (event.minute) state.minute = event.minute;
     if (event.status) state.status = event.status;
-    
+
     dom.matchTitle.textContent = `${state.homeTeam} 🆚 ${state.awayTeam}`;
     dom.matchScore.textContent = state.score;
     dom.matchMinute.textContent = `⏱️ ${state.minute}'`;
-    
+
     const statusLabels = {
         live: '🔴 LIVE',
         finished: '🏁 FINISHED',
         upcoming: '⏳ UPCOMING'
     };
     dom.matchStatus.textContent = statusLabels[state.status] || '🔴 LIVE';
-    dom.matchStatus.className = state.status === 'live' ? 'live' : '';
+    dom.matchStatus.className = state.status === 'live' ? 'live' : 'finished';
+}
+
+function showTipNotification(tip) {
+    // Simple visual feedback
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #ff6b35, #ff4500);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        box-shadow: 0 10px 40px rgba(255, 69, 0, 0.3);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        max-width: 300px;
+    `;
+
+    const amount = tip.amount || '0.01';
+    notification.textContent = `🔥 TIP RECEIVED! ${amount} SOL`;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => notification.remove(), 500);
+    }, 3000);
 }
 
 // ============================================
 // WALLET
 // ============================================
-async function connectWallet() {
-    try {
-        if (window.solana && window.solana.isPhantom) {
-            const response = await window.solana.connect();
-            walletAddress = response.publicKey.toString();
-            dom.walletBtn.textContent = `🔗 ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
-            dom.walletBtn.className = 'wallet-btn connected';
-            
-            // Reconnect WebSocket with wallet address
-            if (ws) ws.close();
-            setTimeout(connectWebSocket, 500);
-        } else {
-            alert('Please install Phantom Wallet: https://phantom.app/');
-        }
-    } catch (error) {
-        console.error('Wallet connection error:', error);
+function connectWallet() {
+    if (window.solana && window.solana.isPhantom) {
+        window.solana.connect()
+            .then(response => {
+                walletAddress = response.publicKey.toString();
+                dom.walletBtn.textContent = `🔗 ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+                dom.walletBtn.className = 'wallet-btn connected';
+                console.log('✅ Wallet connected:', walletAddress);
+
+                // Reconnect WebSocket with wallet
+                if (ws) ws.close();
+                setTimeout(connectWebSocket, 500);
+            })
+            .catch(error => {
+                console.error('Wallet connection rejected:', error);
+            });
+    } else {
+        alert('Please install Phantom Wallet:\nhttps://phantom.app/');
+        window.open('https://phantom.app/', '_blank');
     }
+}
+
+// Auto-detect Phantom wallet
+if (window.solana && window.solana.isPhantom) {
+    window.solana.on('connect', () => {
+        walletAddress = window.solana.publicKey.toString();
+        dom.walletBtn.textContent = `🔗 ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+        dom.walletBtn.className = 'wallet-btn connected';
+        console.log('✅ Wallet auto-connected');
+    });
+
+    window.solana.on('disconnect', () => {
+        walletAddress = null;
+        dom.walletBtn.textContent = '🔗 Connect Wallet';
+        dom.walletBtn.className = 'wallet-btn';
+        console.log('🔌 Wallet disconnected');
+    });
 }
 
 // ============================================
@@ -207,15 +284,27 @@ async function sendTip(amount) {
         });
 
         const result = await response.json();
-        
+
         if (result.success) {
             console.log(`🔥 Tip sent: ${amount} SOL`);
+
+            // Optimistic UI update
+            state.tips.unshift({
+                from: walletAddress,
+                amount: amount,
+                timestamp: Date.now()
+            });
+            if (state.tips.length > 20) state.tips.pop();
+            updateTips();
+
+            // Play sound effect
+            showTipNotification({ amount: amount });
         } else {
             alert(`❌ ${result.message}`);
         }
     } catch (error) {
         console.error('Tip error:', error);
-        alert('❌ Error sending tip');
+        alert('❌ Error sending tip. Please try again.');
     }
 }
 
@@ -223,36 +312,83 @@ async function sendTip(amount) {
 // SIMULATION
 // ============================================
 function simulateEvent() {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-        alert('Not connected to server');
+    if (!ws || ws.readyState !== 1) {
+        alert('⚠️ Not connected to server. Please wait...');
         return;
     }
-    
-    const events = ['goal', 'foul', 'yellow_card', 'substitution'];
+
+    const events = ['goal', 'foul', 'yellow_card', 'substitution', 'offside'];
     const randomEvent = events[Math.floor(Math.random() * events.length)];
-    
+
     ws.send(JSON.stringify({
         type: 'match_event',
         data: { event: randomEvent }
     }));
-    
+
     // Visual feedback
     dom.commentaryText.textContent = `⚡ Simulating: ${randomEvent.toUpperCase()}...`;
+
+    // Auto-update commentary after simulation
     setTimeout(() => {
-        // Will be updated by WebSocket message
-    }, 100);
+        // Commentary will be updated by WebSocket message
+        // This is just a visual placeholder
+        const eventMessages = {
+            goal: '⚽ GOAL! The crowd goes wild!',
+            foul: '🟨 Foul! The referee calls it!',
+            yellow_card: '🟨 Yellow card shown!',
+            substitution: '🔄 Substitution being made!',
+            offside: '🚩 Offside! The linesman raises the flag!'
+        };
+        dom.commentaryText.textContent = `"⚡ ${eventMessages[randomEvent] || 'Match event simulated!'}"`;
+    }, 500);
 }
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+document.addEventListener('keydown', (e) => {
+    if (e.key === '1') sendTip(0.01);
+    if (e.key === '2') sendTip(0.05);
+    if (e.key === '3') sendTip(0.1);
+    if (e.key === 's') simulateEvent();
+    if (e.key === 'w') connectWallet();
+});
+
+// ============================================
+// CSS ANIMATIONS (injected)
+// ============================================
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    .tip-btn:active {
+        animation: pulse 0.3s ease;
+    }
+`;
+document.head.appendChild(style);
 
 // ============================================
 // INIT
 // ============================================
+console.log('🎙️ FanCast DAO loaded');
 connectWebSocket();
 
-// Auto-connect wallet if Phantom is available
-if (window.solana && window.solana.isPhantom) {
-    window.solana.on('connect', () => {
-        walletAddress = window.solana.publicKey.toString();
-        dom.walletBtn.textContent = `🔗 ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
-        dom.walletBtn.className = 'wallet-btn connected';
-    });
+// Auto-connect wallet if Phantom is available and trusted
+if (window.solana && window.solana.isPhantom && window.solana.publicKey) {
+    walletAddress = window.solana.publicKey.toString();
+    dom.walletBtn.textContent = `🔗 ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+    dom.walletBtn.className = 'wallet-btn connected';
+    console.log('✅ Wallet already connected');
 }
