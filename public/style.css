@@ -1,0 +1,230 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #1a0000 0%, #4a0000 50%, #1a0000 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+#app {
+    max-width: 800px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff6b35, #ff4500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #aaa;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot.online { background: #00ff88; }
+.dot.offline { background: #ff4444; }
+
+/* Match Status */
+.match-status {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.match-status h2 {
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.match-info {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 10px;
+    font-size: 16px;
+    color: #ccc;
+}
+
+.match-info .live { color: #00ff88; font-weight: 700; }
+
+/* Commentary */
+.commentary-container {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 120px;
+}
+
+.commentary-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.commentary-header span:first-child { font-size: 24px; }
+
+#commentaryText {
+    font-size: 20px;
+    line-height: 1.6;
+    font-weight: 400;
+    color: #fff;
+    min-height: 60px;
+}
+
+.energy-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 15px;
+    font-size: 13px;
+    color: #aaa;
+}
+
+.bar-track {
+    flex: 1;
+    height: 6px;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b35, #ffd700);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+/* Tips */
+.tips-container {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.tips-container h3 {
+    font-size: 13px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.tips-container .empty {
+    color: #555;
+    font-size: 14px;
+}
+
+.tip-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.tip-item .amount {
+    color: #ffd700;
+    font-weight: 600;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.controls button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.controls button:hover { transform: scale(1.05); }
+
+.tip-btn {
+    background: #e8590c;
+    color: #fff;
+}
+.tip-btn:hover { background: #f76707; }
+
+.tip-01 { background: #e8590c; }
+.tip-05 { background: #f76707; }
+.tip-1 { background: #ff922b; }
+
+.wallet-btn {
+    background: #7b2fbe;
+    color: #fff;
+}
+.wallet-btn:hover { background: #9b4dca; }
+.wallet-btn.connected { background: #00b894; }
+
+.simulate-btn {
+    background: #0984e3;
+    color: #fff;
+}
+.simulate-btn:hover { background: #0873c7; }
+
+/* Scrollbar */
+.tips-container::-webkit-scrollbar {
+    width: 4px;
+}
+.tips-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.tips-container::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+}
