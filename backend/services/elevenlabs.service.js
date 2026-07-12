@@ -1,4 +1,4 @@
-class ElevenLabsVoiceService {
+export class ElevenLabsVoiceService {
     constructor() {
         this.apiKey = process.env.ELEVENLABS_API_KEY;
         this.voiceMap = {
@@ -48,5 +48,3 @@ class ElevenLabsVoiceService {
         }
     }
 }
-
-module.exports = { ElevenLabsVoiceService };
