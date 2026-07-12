@@ -1,6 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-class GeminiCommentaryService {
+export class GeminiCommentaryService {
     constructor() {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         this.model = genAI.getGenerativeModel({
@@ -97,5 +97,3 @@ class GeminiCommentaryService {
         return 'mixed';
     }
 }
-
-module.exports = { GeminiCommentaryService };
