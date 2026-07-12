@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎙️ FanCast DAO</title>
+    <link rel="stylesheet" href="/style.css" />
+    <!-- Solana Wallet Adapter (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.0/dist/web3.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <h1>🎙️ FanCast DAO</h1>
+            <div class="status">
+                <span id="connectionDot" class="dot offline"></span>
+                <span id="connectionStatus">Offline</span>
+            </div>
+        </header>
+
+        <!-- Match Status -->
+        <div class="match-status">
+            <h2 id="matchTitle">France 🆚 Brazil</h2>
+            <div class="match-info">
+                <span id="matchScore">2 - 1</span>
+                <span id="matchMinute">⏱️ 67'</span>
+                <span id="matchStatus" class="live">🔴 LIVE</span>
+            </div>
+        </div>
+
+        <!-- Commentary -->
+        <div class="commentary-container">
+            <div class="commentary-header">
+                <span id="toneEmoji">🎙️</span>
+                <span id="toneLabel">Commentary</span>
+            </div>
+            <p id="commentaryText">🎙️ Waiting for the match to start...</p>
+            <div class="energy-bar">
+                <span>Energy</span>
+                <div class="bar-track">
+                    <div id="energyFill" class="bar-fill" style="width: 50%"></div>
+                </div>
+                <span id="energyLabel">50%</span>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="tips-container">
+            <h3>💰 LIVE TIPS</h3>
+            <div id="tipsList">
+                <p class="empty">No tips yet. Be the first!</p>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button onclick="sendTip(0.01)" class="tip-btn tip-01">🔥 0.01 SOL</button>
+            <button onclick="sendTip(0.05)" class="tip-btn tip-05">🔥🔥 0.05 SOL</button>
+            <button onclick="sendTip(0.1)" class="tip-btn tip-1">🔥🔥🔥 0.1 SOL</button>
+            <button onclick="connectWallet()" class="wallet-btn" id="walletBtn">🔗 Connect Wallet</button>
+            <button onclick="simulateEvent()" class="simulate-btn">⚡ Simulate</button>
+        </div>
+    </div>
+
+    <audio id="audioPlayer"></audio>
+    <script src="/app.js"></script>
+</body>
+</html>
