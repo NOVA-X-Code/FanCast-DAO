@@ -1,6 +1,6 @@
-const { WebSocketServer } = require('ws');
+import { WebSocketServer } from 'ws';
 
-class WebSocketManager {
+export class WebSocketManager {
     constructor(server) {
         this.wss = new WebSocketServer({ server, path: '/ws' });
         this.clients = new Map();
@@ -95,7 +95,7 @@ class WebSocketManager {
         const message = JSON.stringify(data);
 
         clients.forEach(client => {
-            if (client.ws.readyState === 1) { // WebSocket.OPEN
+            if (client.ws.readyState === 1) {
                 client.ws.send(message);
             }
         });
@@ -107,5 +107,3 @@ class WebSocketManager {
         return count;
     }
 }
-
-module.exports = { WebSocketManager };
