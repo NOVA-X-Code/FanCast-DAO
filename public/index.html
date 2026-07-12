@@ -1,71 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🎙️ FanCast DAO — Decentralized Fan Radio</title>
-    <link rel="stylesheet" href="/style.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FanCast DAO — Live Fan Radio</title>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0d17;
+    --panel: #141826;
+    --accent-a: #ff5e5e;
+    --accent-b: #4dd6ff;
+    --text: #f2f4ff;
+    --muted: #8b90a8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: radial-gradient(circle at top, #1a1f33, var(--bg));
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    text-align: center;
+    padding: 28px 16px 8px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 1px;
+  }
+  header p { color: var(--muted); margin-top: 6px; }
+
+  .scoreboard {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin: 20px auto;
+    max-width: 600px;
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 18px 24px;
+  }
+  .team { text-align: center; flex: 1; }
+  .team h2 { margin: 0 0 4px; font-size: 1.2rem; }
+  .score { font-size: 2.4rem; font-weight: 700; }
+  .minute { text-align: center; color: var(--muted); font-size: 0.9rem; }
+
+  .hype-bar { height: 8px; border-radius: 4px; background: #2a3049; overflow: hidden; margin-top: 8px; }
+  .hype-fill-a { height: 100%; background: linear-gradient(90deg, var(--accent-a), #ff9d5e); transition: width 0.4s; }
+  .hype-fill-b { height: 100%; background: linear-gradient(90deg, var(--accent-b), #4dffb0); transition: width 0.4s; }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 16px 60px;
+  }
+
+  .commentary-box {
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 24px;
+    min-height: 100px;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    box-shadow: 0 0 0 1px #22273c;
+  }
+  .commentary-box .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .log {
+    margin-top: 16px;
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .log-item {
+    background: #10131f;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .log-item b { color: var(--text); }
+
+  .tip-jar {
+    margin-top: 28px;
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .tip-jar h3 { margin-top: 0; }
+  .wallet-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  button {
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+    border: none;
+    color: #08090d;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary {
+    background: #22273c;
+    color: var(--text);
+  }
+  input[type="number"] {
+    background: #10131f;
+    border: 1px solid #2a3049;
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 10px;
+    width: 100px;
+  }
+  select {
+    background: #10131f;
+    border: 1px solid #2a3049;
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .status { font-size: 0.85rem; color: var(--muted); margin-top: 10px; min-height: 20px; }
+  .status.error { color: var(--accent-a); }
+  .status.success { color: #4dffb0; }
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding-bottom: 30px; }
+</style>
 </head>
 <body>
-    <div id="app">
-        <!-- Header -->
-        <header>
-            <h1>🎙️ FanCast DAO</h1>
-            <div class="status">
-                <span id="connectionDot" class="dot offline"></span>
-                <span id="connectionStatus">Offline</span>
-            </div>
-        </header>
 
-        <!-- Match Status -->
-        <div class="match-status">
-            <h2 id="matchTitle">France 🆚 Morrocco</h2>
-            <div class="match-info">
-                <span id="matchScore">2 - 1</span>
-                <span id="matchMinute">⏱️ 67'</span>
-                <span id="matchStatus" class="live">🔴 LIVE</span>
-            </div>
-        </div>
+<header>
+  <h1>🎙️ FanCast DAO</h1>
+  <p>Fan-powered live radio — Gemini writes it, ElevenLabs speaks it, Solana fuels it.</p>
+</header>
 
-        <!-- Commentary -->
-        <div class="commentary-container">
-            <div class="commentary-header">
-                <span id="toneEmoji">🎙️</span>
-                <span id="toneLabel">Commentary</span>
-            </div>
-            <p id="commentaryText">🎙️ Waiting for the match to start...</p>
-            <div class="energy-bar">
-                <span>Energy</span>
-                <div class="bar-track">
-                    <div id="energyFill" class="bar-fill" style="width: 50%"></div>
-                </div>
-                <span id="energyLabel">50%</span>
-            </div>
-        </div>
+<div class="scoreboard">
+  <div class="team">
+    <h2 id="teamAName">Team A</h2>
+    <div class="score" id="scoreA">0</div>
+    <div class="hype-bar"><div class="hype-fill-a" id="hypeA" style="width: 50%"></div></div>
+  </div>
+  <div class="minute" id="minute">0'</div>
+  <div class="team">
+    <h2 id="teamBName">Team B</h2>
+    <div class="score" id="scoreB">0</div>
+    <div class="hype-bar"><div class="hype-fill-b" id="hypeB" style="width: 50%"></div></div>
+  </div>
+</div>
 
-        <!-- Tips -->
-        <div class="tips-container">
-            <h3>💰 LIVE TIPS</h3>
-            <div id="tipsList">
-                <p class="empty">No tips yet. Be the first!</p>
-            </div>
-        </div>
+<main>
+  <div class="commentary-box">
+    <div class="tag">Live commentary</div>
+    <div id="currentText">Waiting for kickoff... connect and send a tip to hype up the crowd!</div>
+  </div>
+  <div class="log" id="log"></div>
 
-        <!-- Controls -->
-        <div class="controls">
-            <button onclick="sendTip(0.01)" class="tip-btn tip-01">🔥 0.01 SOL</button>
-            <button onclick="sendTip(0.05)" class="tip-btn tip-05">🔥🔥 0.05 SOL</button>
-            <button onclick="sendTip(0.1)" class="tip-btn tip-1">🔥🔥🔥 0.1 SOL</button>
-            <button onclick="connectWallet()" class="wallet-btn" id="walletBtn">🔗 Connect Wallet</button>
-            <button onclick="simulateEvent()" class="simulate-btn">⚡ Simulate</button>
-        </div>
+  <div class="tip-jar">
+    <h3>💸 Tip Jar of Passion (Solana devnet)</h3>
+    <div class="wallet-row">
+      <button id="connectBtn">Connect Phantom Wallet</button>
+      <span id="walletAddr" class="status"></span>
     </div>
+    <div class="wallet-row">
+      <select id="teamSelect">
+        <option value="A" id="optA">Team A</option>
+        <option value="B" id="optB">Team B</option>
+      </select>
+      <input type="number" id="tipAmount" value="0.05" step="0.01" min="0.001" />
+      <span>SOL</span>
+      <button id="tipBtn" disabled>Send Fervor Boost</button>
+      <button id="nextEventBtn" class="secondary">Trigger next event (demo)</button>
+    </div>
+    <div class="status" id="tipStatus"></div>
+  </div>
+</main>
 
-    <audio id="audioPlayer"></audio>
+<footer>Solana devnet only — no real funds involved. Built for the DEV Weekend Challenge: Passion Edition.</footer>
 
-    <!-- Solana Web3.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.0/dist/web3.min.js"></script>
-    <!-- App -->
-    <script src="/app.js"></script>
+<script src="/app.js"></script>
 </body>
 </html>
