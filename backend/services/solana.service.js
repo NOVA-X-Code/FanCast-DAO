@@ -1,6 +1,6 @@
-const { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL } = require('@solana/web3.js');
+import { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
-class SolanaTipService {
+export class SolanaTipService {
     constructor() {
         this.connection = new Connection(
             process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
@@ -22,7 +22,7 @@ class SolanaTipService {
                 };
             }
 
-            // Transaction simulation (in production, send actual transaction)
+            // Transaction simulation (en production, envoyer la transaction réelle)
             // const transaction = new Transaction().add(
             //     SystemProgram.transfer({
             //         fromPubkey: from,
@@ -64,5 +64,3 @@ class SolanaTipService {
         console.log(`📡 Tip emitted: ${tip.amount} SOL`);
     }
 }
-
-module.exports = { SolanaTipService };
